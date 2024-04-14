@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using courses_dotnet_api.Src.DTOs.Account;
 using courses_dotnet_api.Src.Interfaces;
 using Microsoft.AspNetCore.Mvc;
@@ -37,4 +39,12 @@ public class AccountController : BaseApiController
 
         return TypedResults.Ok(accountDto);
     }
+    private bool VerifyPassword(string password, byte[] storedHash, byte[] storedSalt)
+{
+    using var hmac = new HMACSHA512(storedSalt);
+    var computedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
+
+    return computedHash.SequenceEqual(storedHash);
+}
+
 }
