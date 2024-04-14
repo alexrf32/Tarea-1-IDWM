@@ -39,12 +39,37 @@ public class AccountController : BaseApiController
 
         return TypedResults.Ok(accountDto);
     }
-    private bool VerifyPassword(string password, byte[] storedHash, byte[] storedSalt)
-{
+    private bool ComparePassword(string password, byte[] storedHash, byte[] storedSalt){
     using var hmac = new HMACSHA512(storedSalt);
     var computedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
 
     return computedHash.SequenceEqual(storedHash);
-}
+    }
 
+    [HttpPost("login")]
+    public async Task<IResult> Login(LoginDto loginDto)
+    {
+        var Email = await _userRepository.UserExistsByEmailAsync(loginDto.Email);
+
+        if (!Email)
+        {
+            return TypedResults.BadRequest("Credentials are invalid");
+        }
+
+        var password = await _userRepository.GetPasswordDtoAsync(loginDto.Email);
+
+        if(password == null)
+        {
+            return TypedResults.BadRequest("Credentials are invalid");
+        }
+
+        if(!ComparePassword(loginDto.Password, password.PasswordHash, password.PasswordSalt))
+        {
+            return TypedResults.BadRequest("Credentials are invalid");
+        }
+
+        AccountDto? account = await _accountRepository.GetAccountAsync(loginDto.Email);
+
+        return TypedResults.Ok(account); 
+    }
 }
