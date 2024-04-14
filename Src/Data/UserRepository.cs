@@ -1,3 +1,4 @@
+using courses_dotnet_api.Src.DTOs.Account;
 using courses_dotnet_api.Src.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -26,4 +27,17 @@ public class UserRepository : IUserRepository
     {
         return 0 < await _dataContext.SaveChangesAsync();
     }
+
+    public async Task<PasswordDto?> GetPasswordDtoAsync(string email) {
+        var userPassword= await _dataContext.Users.FirstOrDefaultAsync(user => user.Email == email);
+         if(userPassword == null){
+            return null;
+        }
+         return new PasswordDto
+        {
+            PasswordHash = userPassword.PasswordHash,
+            PasswordSalt = userPassword.PasswordSalt
+        };
+    }
+
 }
